@@ -340,9 +340,7 @@ class pixelfly:
     def set_trigger_mode(self, text, checked):
         if checked:
             self.trigger_mode = text
-            mode_cam = self.parent.defaults["trigger_mode"][text]
-            self.cam.configuration = {"trigger": mode_cam}
-            # print(f"trigger source = {arg}")
+            self.cam.configureHWIO_1_exposureTrigger(self.trigger_mode == "external TTL", "rising edge")
 
     def set_expo_time(self, expo_time):
         self.cam.configuration = {'exposure time': expo_time}
