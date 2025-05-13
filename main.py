@@ -308,7 +308,7 @@ class pixelfly:
         try:
             # due to some unknow issues in computer IO and the way pco package is coded,
             # an explicit assignment to "interface" keyword is required
-            self.cam = pco.Camera(interface='USB 2.0')
+            self.cam = pco.Camera(interface='USB 3.0')
         except Exception as err:
             logging.error(traceback.format_exc())
             logging.error("Can't open camera")
@@ -316,7 +316,6 @@ class pixelfly:
 
         # initialize camera
         self.set_sensor_format(self.parent.defaults["sensor_format"]["default"])
-        self.set_clock_rate(self.parent.defaults["clock_rate"]["default"])
         self.set_conv_factor(self.parent.defaults["conv_factor"]["default"])
         self.set_trigger_mode(self.parent.defaults["trigger_mode"]["default"], True)
         self.set_expo_time(self.parent.defaults["expo_time"].getfloat("default"))
@@ -330,11 +329,6 @@ class pixelfly:
         self.cam.sdk.set_sensor_format(format_cam)
         self.cam.sdk.arm_camera()
         # print(f"sensor format = {arg}")
-
-    def set_clock_rate(self, arg):
-        rate = self.parent.defaults["clock_rate"].getint(arg)
-        self.cam.configuration = {"pixel rate": rate}
-        # print(f"clock rate = {arg}")
 
     # conversion factor, which is 1/gain or number of electrons/count
     def set_conv_factor(self, arg):
@@ -357,7 +351,7 @@ class pixelfly:
     # 4*4 binning at most
     def set_binning(self, bin_h, bin_v):
         self.binning = {"horizontal": int(bin_h), "vertical": int(bin_v)}
-        self.cam.configuration = {'binning': (self.binning["horizontal"], self.binning["vertical"])}
+        # self.cam.configuration = {'binning': (self.binning["horizontal"], self.binning["vertical"])}
         # print(f"binning = {bin_h} (horizontal), {bin_v} (vertical)")
 
     # image size of camera returned image, depends on sensor format and binning
@@ -658,17 +652,6 @@ class Control(Scrollarea):
         self.sensor_format_cb.setCurrentText(self.parent.device.sensor_format)
         self.sensor_format_cb.currentTextChanged[str].connect(lambda val: self.set_sensor_format(val))
         cam_ctrl_frame.addRow("Sensor format:", self.sensor_format_cb)
-
-        # set clock rate
-        self.clock_rate_cb = NewComboBox()
-        self.clock_rate_cb.setMaximumWidth(200)
-        self.clock_rate_cb.setMaximumHeight(20)
-        op = [x.strip() for x in self.parent.defaults["clock_rate"]["options"].split(',')]
-        self.clock_rate_cb.addItems(op)
-        default = self.parent.defaults["clock_rate"]["default"]
-        self.clock_rate_cb.setCurrentText(default)
-        self.clock_rate_cb.currentTextChanged[str].connect(lambda val: self.parent.device.set_clock_rate(val))
-        cam_ctrl_frame.addRow("Clock rate:", self.clock_rate_cb)
 
         # set conversion factor
         self.conv_factor_cb = NewComboBox()
@@ -1253,7 +1236,6 @@ class Control(Scrollarea):
         
         config["camera_control"] = {}
         config["camera_control"]["sensor_format"] = self.sensor_format_cb.currentText()
-        config["camera_control"]["clock_rate"] = self.clock_rate_cb.currentText()
         config["camera_control"]["conversion_factor"] = self.conv_factor_cb.currentText()
         for i in self.trig_mode_rblist:
             if i.isChecked():
@@ -1315,7 +1297,6 @@ class Control(Scrollarea):
         self.sensor_format_cb.setCurrentText(config["camera_control"]["sensor_format"])
         # the combobox emits 'currentTextChanged' signal, and its connected function will be called
 
-        self.clock_rate_cb.setCurrentText(config["camera_control"]["clock_rate"])
         self.conv_factor_cb.setCurrentText(config["camera_control"]["conversion_factor"])
         for i in self.trig_mode_rblist:
             if i.text() == config["camera_control"]["trigger_mode"]:
@@ -1574,7 +1555,7 @@ class CameraGUI(qt.QMainWindow):
         
         self.setWindowIcon(QIcon(window_icon_name))
         
-        self.setWindowTitle('pco.pixelfly usb (ring buffer)')
+        self.setWindowTitle('pco.panda usb (ring buffer)')
         self.setStyleSheet("QWidget{font: 10pt;}")
         # self.setStyleSheet("QToolTip{background-color: black; color: white; font: 10pt;}")
         self.app = app
