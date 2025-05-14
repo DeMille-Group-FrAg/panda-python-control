@@ -315,7 +315,7 @@ class pixelfly:
             return
 
         # initialize camera
-        self.set_sensor_format(self.parent.defaults["sensor_format"]["default"])
+        self.set_software_roi(self.parent.defaults["software_roi"]["default"])
         self.set_conv_factor(self.parent.defaults["conv_factor"]["default"])
         self.set_trigger_mode(self.parent.defaults["trigger_mode"]["default"], True)
         self.set_expo_time(self.parent.defaults["expo_time"].getfloat("default"))
@@ -323,12 +323,9 @@ class pixelfly:
                         self.parent.defaults["binning"].getint("vertical_default"))
         self.set_image_shape()
 
-    def set_sensor_format(self, arg):
-        self.sensor_format = arg
-        format_cam = self.parent.defaults["sensor_format"][arg]
-        self.cam.sdk.set_sensor_format(format_cam)
+    def set_software_roi(self, arg):
+        self.software_roi = arg
         self.cam.sdk.arm_camera()
-        # print(f"sensor format = {arg}")
 
     # conversion factor, which is 1/gain or number of electrons/count
     def set_conv_factor(self, arg):
@@ -359,9 +356,9 @@ class pixelfly:
 
     # image size of camera returned image, depends on sensor format and binning
     def set_image_shape(self):
-        format_str = self.sensor_format + " absolute_"
-        self.image_shape = {"xmax": int(self.parent.defaults["sensor_format"].getint(format_str+"xmax")/self.binning["horizontal"]),
-                            "ymax": int(self.parent.defaults["sensor_format"].getint(format_str+"ymax")/self.binning["vertical"])}
+        format_str = self.software_roi + " absolute_"
+        self.image_shape = {"xmax": int(self.parent.defaults["software_roi"].getint(format_str+"xmax")/self.binning["horizontal"]),
+                            "ymax": int(self.parent.defaults["software_roi"].getint(format_str+"ymax")/self.binning["vertical"])}
 
 # the class that places elements in UI and handles data processing
 class Control(Scrollarea):
@@ -646,15 +643,15 @@ class Control(Scrollarea):
         self.frame.addWidget(self.cam_ctrl_box)
 
         # set sensor format
-        self.sensor_format_cb = NewComboBox()
-        self.sensor_format_cb.setToolTip("Customized format doesn't reduce active CCD size, but crops images in software.")
-        self.sensor_format_cb.setMaximumWidth(200)
-        self.sensor_format_cb.setMaximumHeight(20)
-        op = [x.strip() for x in self.parent.defaults["sensor_format"]["options"].split(',')]
-        self.sensor_format_cb.addItems(op)
-        self.sensor_format_cb.setCurrentText(self.parent.device.sensor_format)
-        self.sensor_format_cb.currentTextChanged[str].connect(lambda val: self.set_sensor_format(val))
-        cam_ctrl_frame.addRow("Sensor format:", self.sensor_format_cb)
+        self.software_roi_cb = NewComboBox()
+        self.software_roi_cb.setToolTip("Customized format doesn't reduce active CCD size, but crops images in software.")
+        self.software_roi_cb.setMaximumWidth(200)
+        self.software_roi_cb.setMaximumHeight(20)
+        op = [x.strip() for x in self.parent.defaults["software_roi"]["options"].split(',')]
+        self.software_roi_cb.addItems(op)
+        self.software_roi_cb.setCurrentText(self.parent.device.software_roi)
+        self.software_roi_cb.currentTextChanged[str].connect(lambda val: self.set_software_roi(val))
+        cam_ctrl_frame.addRow("Software ROI:", self.software_roi_cb)
 
         # set conversion factor
         self.conv_factor_cb = NewComboBox()
@@ -1105,16 +1102,16 @@ class Control(Scrollarea):
     def set_img_save(self, state):
         self.img_save = state
 
-    def set_sensor_format(self, val):
+    def set_software_roi(self, val):
         # set bounds for ROI spinboxes
         format_str = val + " absolute_"
-        x_max = (self.parent.defaults["sensor_format"].getint(format_str+"xmax"))/self.parent.device.binning["horizontal"]
+        x_max = (self.parent.defaults["software_roi"].getint(format_str+"xmax"))/self.parent.device.binning["horizontal"]
         self.x_max_sb.setMaximum(int(x_max))
-        y_max = (self.parent.defaults["sensor_format"].getint(format_str+"ymax"))/self.parent.device.binning["vertical"]
+        y_max = (self.parent.defaults["software_roi"].getint(format_str+"ymax"))/self.parent.device.binning["vertical"]
         self.y_max_sb.setMaximum(int(y_max))
         # number in both 'min' and 'max' spinboxes will adjusted automatically
 
-        self.parent.device.set_sensor_format(val)
+        self.parent.device.set_software_roi(val)
         self.parent.device.set_image_shape()
 
         # set boundaries for in image ROI selections
@@ -1144,12 +1141,12 @@ class Control(Scrollarea):
 
     def set_binning(self, text, bin_h, bin_v):
         # set bounds for ROI spinboxes
-        format_str = self.parent.device.sensor_format + " absolute_"
+        format_str = self.parent.device.software_roi + " absolute_"
         if text == "hori":
-            x_max = (self.parent.defaults["sensor_format"].getint(format_str+"xmax"))/int(bin_h)
+            x_max = (self.parent.defaults["software_roi"].getint(format_str+"xmax"))/int(bin_h)
             self.x_max_sb.setMaximum(int(x_max))
         elif text == "vert":
-            y_max = (self.parent.defaults["sensor_format"].getint(format_str+"ymax"))/int(bin_v)
+            y_max = (self.parent.defaults["software_roi"].getint(format_str+"ymax"))/int(bin_v)
             self.y_max_sb.setMaximum(int(y_max))
         else:
             logging.warning("Binning type not supported.")
@@ -1238,7 +1235,7 @@ class Control(Scrollarea):
         config["image_control"]["auto_scale_state_Average_image"] = str(self.parent.image_win.ave_img_auto_scale_state)
         
         config["camera_control"] = {}
-        config["camera_control"]["sensor_format"] = self.sensor_format_cb.currentText()
+        config["camera_control"]["software_roi"] = self.software_roi_cb.currentText()
         config["camera_control"]["conversion_factor"] = self.conv_factor_cb.currentText()
         for i in self.trig_mode_rblist:
             if i.isChecked():
@@ -1297,7 +1294,7 @@ class Control(Scrollarea):
             self.parent.image_win.auto_scale_chb_dict[name].setChecked(config["image_control"].getboolean(f"auto_scale_state_{name}"))
         self.parent.image_win.ave_img_auto_scale_chb.setChecked(config["image_control"].getboolean("auto_scale_state_Average_image"))
 
-        self.sensor_format_cb.setCurrentText(config["camera_control"]["sensor_format"])
+        self.software_roi_cb.setCurrentText(config["camera_control"]["software_roi"])
         # the combobox emits 'currentTextChanged' signal, and its connected function will be called
 
         self.conv_factor_cb.setCurrentText(config["camera_control"]["conversion_factor"])
