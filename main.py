@@ -349,8 +349,13 @@ class pixelfly:
     # 4*4 binning at most
     def set_binning(self, bin_h, bin_v):
         self.binning = {"horizontal": int(bin_h), "vertical": int(bin_v)}
-        # self.cam.configuration = {'binning': (self.binning["horizontal"], self.binning["vertical"])}
-        # print(f"binning = {bin_h} (horizontal), {bin_v} (vertical)")
+        xmax = self.cam.description["max width"]
+        ymax = self.cam.description["max height"]
+        self.cam.configuration = {
+            # Need to set the hardware ROI at the same time so that the software doesn't complain
+            "roi": (1, 1, xmax // self.binning["horizontal"], ymax // self.binning["vertical"]),
+            "binning": (self.binning["horizontal"], self.binning["vertical"]),
+        }
 
     # image size of camera returned image, depends on sensor format and binning
     def set_image_shape(self):
