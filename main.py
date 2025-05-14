@@ -315,6 +315,8 @@ class pixelfly:
             return
 
         # initialize camera
+        self.cam.configuration = {"trigger": "external exposure start & software trigger"} # Set to take single images on software or TTL trigger
+
         self.set_software_roi(self.parent.defaults["software_roi"]["default"])
         self.set_conv_factor(self.parent.defaults["conv_factor"]["default"])
         self.set_trigger_mode(self.parent.defaults["trigger_mode"]["default"], True)
