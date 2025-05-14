@@ -22,7 +22,7 @@ from PyQt5.QtGui import QIcon
 
 from widgets import NewSpinBox, NewDoubleSpinBox, NewComboBox, Scrollarea, imageWidget
 
-window_icon_name = 'John_Doyle.ico'
+window_icon_name = "panda.ico"
 
 def gaussian(amp, x_mean, y_mean, x_width, y_width, offset):
     x_width = float(x_width)
@@ -1603,11 +1603,12 @@ class CameraGUI(qt.QMainWindow):
 if __name__ == '__main__':
     app = qt.QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    main_window = CameraGUI(app)
 
-    # This is for making the window's icon
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("mycompany.myproduct.subproduct.version")
+    # Set app icon
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("frag.cameras.panda") # This line must run before creating any GUI to work
     app.setWindowIcon(QIcon(window_icon_name))
+
+    main_window = CameraGUI(app)
     
     try:
         app.exec_()
