@@ -203,8 +203,8 @@ class CamThread(PyQt5.QtCore.QThread):
             while self.parent.control.active:
                 # wait until a new image is available,
                 # this step will block the thread, so it can;t be in the main thread
-                if self.parent.device.cam.rec.get_status()['dwProcImgCount'] > self.counter:
-                    print(self.parent.device.cam.rec.get_status()['dwProcImgCount'])
+                if self.parent.device.cam.recorded_image_count > self.counter:
+                    print(self.parent.device.cam.recorded_image_count)
                     print('yes')
                     break
                 time.sleep(0.001)
